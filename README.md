@@ -1,7 +1,5 @@
 # AI News Hub 📰
 
-![AI News Hub](https://upload.wikimedia.org/wikipedia/commons/f/f8/Newspaper-154444.svg)
-
 AI News Hub is a modern news aggregation and summarization platform powered by AI. Built with Next.js, TypeScript, and Tailwind CSS, it delivers personalized news summaries, real-time updates, and local information in an elegant, user-friendly interface.
 
 ## 🚀 Features
