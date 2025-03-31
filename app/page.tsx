@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { 
@@ -19,7 +19,9 @@ import {
   MoonIcon,
   DropletIcon,
   Clock,
-  CalendarIcon
+  CalendarIcon,
+  MapIcon,
+  LayersIcon
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
@@ -28,6 +30,7 @@ import { motion } from "framer-motion";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import Autoplay from "embla-carousel-autoplay";
+import { GoogleMap, LoadScript, TrafficLayer, Marker } from '@react-google-maps/api';
 
 // Mock news data for carousel
 const topNewsArticles = [
@@ -372,6 +375,156 @@ function WeatherWidget() {
   );
 }
 
+// Traffic Map Component
+function TrafficMapWidget() {
+  const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const [mapLoaded, setMapLoaded] = useState<boolean>(false);
+  const [googleMaps, setGoogleMaps] = useState<any>(null);
+  const [showTraffic, setShowTraffic] = useState<boolean>(true);
+  
+  // Map container style
+  const mapContainerStyle = {
+    width: '100%',
+    height: '400px',
+    borderRadius: '0.5rem'
+  };
+  
+  // Map options
+  const mapOptions = {
+    disableDefaultUI: false,
+    zoomControl: true,
+    streetViewControl: false,
+    mapTypeControl: true,
+    fullscreenControl: true,
+  };
+  
+  // Get user's location
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          setLocation({ lat: latitude, lng: longitude });
+          setLoading(false);
+        },
+        (err) => {
+          console.error("Error getting location:", err);
+          setError("Location access denied. Using default location.");
+          // Use default location (New York)
+          setLocation({ lat: 40.7128, lng: -74.0060 });
+          setLoading(false);
+        }
+      );
+    } else {
+      setError("Geolocation is not supported by this browser. Using default location.");
+      // Use default location (New York)
+      setLocation({ lat: 40.7128, lng: -74.0060 });
+      setLoading(false);
+    }
+  }, []);
+  
+  // Handle map load completion
+  const onMapLoad = useCallback((map: any) => {
+    setMapLoaded(true);
+    setGoogleMaps(window.google);
+  }, []);
+
+  // Toggle traffic layer
+  const toggleTraffic = useCallback(() => {
+    setShowTraffic(prev => !prev);
+  }, []);
+  
+  if (loading) {
+    return (
+      <Card className="w-full">
+        <CardContent className="p-0">
+          <div className="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900/20 dark:to-gray-800/20 p-6 flex items-center justify-center" style={{ height: '400px' }}>
+            <div className="flex flex-col items-center animate-pulse">
+              <MapIcon className="h-12 w-12 text-muted-foreground mb-4" />
+              <Skeleton className="h-4 w-40 mb-2" />
+              <Skeleton className="h-3 w-32" />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+  
+  if (error && !location) {
+    return (
+      <Card className="w-full">
+        <CardContent className="p-0">
+          <div className="bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 p-8">
+            <div className="text-center py-4">
+              <MapIcon className="h-12 w-12 text-red-500/70 mx-auto mb-3" />
+              <h3 className="text-lg font-medium mb-1">Traffic Map Unavailable</h3>
+              <p className="text-muted-foreground">{error}</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+  
+  return (
+    <div className="relative">
+      <Card className="w-full overflow-hidden shadow-sm hover:shadow-md transition-all duration-300">
+        <CardContent className="p-0">
+          {location && (
+            <LoadScript
+              googleMapsApiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || ''}
+              loadingElement={
+                <div className="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900/20 dark:to-gray-800/20 p-6 flex items-center justify-center" style={{ height: '400px' }}>
+                  <div className="flex flex-col items-center">
+                    <MapIcon className="h-12 w-12 text-muted-foreground animate-pulse mb-4" />
+                    <p className="text-muted-foreground">Loading map...</p>
+                  </div>
+                </div>
+              }
+            >
+              <GoogleMap
+                mapContainerStyle={mapContainerStyle}
+                center={location}
+                zoom={14}
+                options={mapOptions}
+                onLoad={onMapLoad}
+              >
+                {/* Add Traffic Layer */}
+                {showTraffic && <TrafficLayer />}
+                
+                {/* Add Marker for Current Location */}
+                {googleMaps && (
+                  <Marker
+                    position={location}
+                    icon={{
+                      url: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png"
+                    }}
+                  />
+                )}
+              </GoogleMap>
+            </LoadScript>
+          )}
+        </CardContent>
+      </Card>
+      
+      {/* Traffic Toggle Button */}
+      <div className="absolute top-4 right-4 z-10">
+        <Button 
+          variant={showTraffic ? "default" : "outline"} 
+          size="sm" 
+          className="flex items-center space-x-1 rounded-full px-3 shadow-md"
+          onClick={toggleTraffic}
+        >
+          <CarIcon className="h-4 w-4 mr-1" />
+          <span>{showTraffic ? "Hide Traffic" : "Show Traffic"}</span>
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 export default function Home() {
   const router = useRouter();
   const plugin = React.useRef(
@@ -519,6 +672,20 @@ export default function Home() {
             
             <div className="max-w-md mx-auto lg:max-w-full">
               <WeatherWidget />
+            </div>
+          </div>
+          
+          {/* Traffic Map Widget */}
+          <div className="mb-12">
+            <div className="text-center">
+              <Badge className="mb-4 px-3 py-1 text-sm font-medium bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400">
+                Live Traffic
+              </Badge>
+              <h2 className="text-2xl font-semibold mb-4">Traffic Around You</h2>
+            </div>
+            
+            <div className="lg:max-w-full">
+              <TrafficMapWidget />
             </div>
           </div>
           
