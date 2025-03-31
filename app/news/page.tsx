@@ -619,7 +619,11 @@ export default function NewsPage() {
                           </Button>
                           
                           {session && (
-                            <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-primary">
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="text-muted-foreground hover:text-white hover:bg-primary transition-colors"
+                            >
                               <BookmarkIcon className="h-4 w-4" />
                             </Button>
                           )}
