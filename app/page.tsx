@@ -556,9 +556,9 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-background">
-      {/* Hero Section */}
-      <section className="relative py-20 px-4 sm:px-6 lg:px-8 overflow-hidden">
-        <div className="absolute inset-0 z-0 bg-gradient-to-br from-primary/5 to-accent/5 dark:from-primary/10 dark:to-accent/10"></div>
+      {/* Hero Section - Update background to match navbar */}
+      <section className="relative py-20 px-4 sm:px-6 lg:px-8 overflow-hidden bg-background">
+        <div className="absolute inset-0 z-0 bg-gradient-to-br from-primary/5 to-accent/5 dark:from-background dark:to-background dark:bg-opacity-100"></div>
         <motion.div 
           className="max-w-7xl mx-auto relative z-10"
           initial="hidden"
@@ -658,8 +658,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Weather and Features Section */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-muted/50">
+      {/* Weather and Features Section - Update background to be consistent */}
+      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-muted/50 dark:bg-background">
         <div className="max-w-7xl mx-auto">
           {/* Weather Widget - Now above features */}
           <div className="mb-12">
@@ -706,58 +706,58 @@ export default function Home() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <motion.div variants={fadeIn}>
                 <Card className="h-full border-border hover:border-primary/50 hover:shadow-md transition-all">
-                  <CardContent className="pt-6">
-                    <div className="text-center">
+              <CardContent className="pt-6">
+                <div className="text-center">
                       <div className="bg-primary/10 p-3 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
                         <NewspaperIcon className="h-8 w-8 text-primary" />
                       </div>
-                      <h3 className="text-xl font-semibold mb-2">AI News Summarization</h3>
-                      <p className="text-muted-foreground">
+                  <h3 className="text-xl font-semibold mb-2">AI News Summarization</h3>
+                  <p className="text-muted-foreground">
                         Get concise, AI-generated summaries of the latest news articles from trusted sources
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
               </motion.div>
 
               <motion.div variants={fadeIn}>
                 <Card className="h-full border-border hover:border-primary/50 hover:shadow-md transition-all">
-                  <CardContent className="pt-6">
-                    <div className="text-center">
+              <CardContent className="pt-6">
+                <div className="text-center">
                       <div className="bg-blue-100 p-3 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
                         <GlobeIcon className="h-8 w-8 text-blue-600" />
                       </div>
                       <h3 className="text-xl font-semibold mb-2">Global Coverage</h3>
-                      <p className="text-muted-foreground">
+                  <p className="text-muted-foreground">
                         Comprehensive news from around the world, with customizable categories and topics
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
               </motion.div>
 
               <motion.div variants={fadeIn}>
                 <Card className="h-full border-border hover:border-primary/50 hover:shadow-md transition-all">
-                  <CardContent className="pt-6">
-                    <div className="text-center">
+              <CardContent className="pt-6">
+                <div className="text-center">
                       <div className="bg-purple-100 p-3 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
                         <TrendingUpIcon className="h-8 w-8 text-purple-600" />
                       </div>
                       <h3 className="text-xl font-semibold mb-2">Trending Topics</h3>
-                      <p className="text-muted-foreground">
+                  <p className="text-muted-foreground">
                         Stay on top of the most discussed topics and trending news stories in real-time
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
               </motion.div>
             </div>
           </motion.div>
-        </div>
+          </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-primary/5 dark:bg-primary/10">
+      {/* CTA Section - Update background */}
+      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-primary/5 dark:bg-background">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-3xl font-bold mb-4">Ready to get started?</h2>
           <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
@@ -775,7 +775,7 @@ export default function Home() {
       </section>
 
       {/* About Section */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8">
+      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-background">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-12">
             <Badge className="mb-4 px-3 py-1 text-sm font-medium bg-secondary text-secondary-foreground">
@@ -792,7 +792,7 @@ export default function Home() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-muted py-12 px-4 sm:px-6 lg:px-8">
+      <footer className="bg-muted py-12 px-4 sm:px-6 lg:px-8 dark:bg-background dark:border-t dark:border-border">
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div>

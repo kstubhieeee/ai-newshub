@@ -57,11 +57,23 @@ export const authOptions: NextAuthOptions = {
       
       return true;
     },
-    async session({ session, user }) {
+    async session({ session, user, token }) {
       // Add user ID to the session
-      if (session.user && user) {
-        (session.user as ExtendedUser).id = user.id;
+      if (session.user) {
+        // First try from JWT token if we're using the JWT strategy
+        if (token?.sub) {
+          (session.user as ExtendedUser).id = token.sub;
+        }
+        // Then try from the user object if we're using the database strategy
+        else if (user?.id) {
+          (session.user as ExtendedUser).id = user.id;
+        }
+        // For MongoDB adapter, get the _id directly
+        else if ((user as any)?._id) {
+          (session.user as ExtendedUser).id = (user as any)._id.toString();
+        }
       }
+      
       return session;
     },
     async jwt({ token, user, account }) {
@@ -76,6 +88,7 @@ export const authOptions: NextAuthOptions = {
     strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
+  debug: process.env.NODE_ENV === 'development',
   secret: process.env.NEXTAUTH_SECRET,
 };
 

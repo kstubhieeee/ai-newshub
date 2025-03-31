@@ -3,12 +3,13 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { NewspaperIcon, MenuIcon, XIcon, ArrowRightIcon, LogInIcon, LogOutIcon } from 'lucide-react'
+import { MenuIcon, XIcon, ArrowRightIcon, LogInIcon, LogOutIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ThemeToggle } from '@/components/theme-toggle'
 import { UserNav } from '@/components/user-nav'
 import { useSession, signIn, signOut } from 'next-auth/react'
 import { Badge } from '@/components/ui/badge'
+import Image from 'next/image'
 
 export default function Navigation() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -50,8 +51,14 @@ export default function Navigation() {
         <div className="flex justify-between h-16">
           <div className="flex">
             <Link href="/" className="flex items-center">
-              <NewspaperIcon className="h-8 w-8 text-primary" />
-              <span className="ml-2 text-2xl nav-brand">AI NEWS HUB</span>
+              <Image 
+                src="https://upload.wikimedia.org/wikipedia/commons/f/f8/Newspaper-154444.svg" 
+                alt="AI News Hub"
+                width={32}
+                height={32}
+                className="h-8 w-8 text-primary"
+              />
+              <span className="ml-2 text-2xl nav-brand">AI News Hub</span>
             </Link>
           </div>
 

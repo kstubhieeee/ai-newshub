@@ -95,6 +95,11 @@ export default function NewsPage() {
   const [copied, setCopied] = useState(false);
   const summaryRef = useRef<HTMLDivElement>(null);
 
+  // New state for bookmarked articles 
+  const [bookmarkedArticles, setBookmarkedArticles] = useState<string[]>([]);
+  // New state for bookmark loading
+  const [bookmarkLoading, setBookmarkLoading] = useState<number | null>(null);
+
   useEffect(() => {
     setIsLoading(true);
     setError(null);
@@ -141,6 +146,29 @@ export default function NewsPage() {
       setFilteredArticles(filtered);
     }
   }, [searchQuery, articles]);
+
+  // Add this after other useEffect hooks
+  useEffect(() => {
+    // Only fetch bookmarks if user is logged in
+    if (session?.user) {
+      const fetchBookmarks = async () => {
+        try {
+          const response = await fetch('/api/bookmarks');
+          if (!response.ok) {
+            throw new Error('Failed to fetch bookmarks');
+          }
+          
+          const bookmarks = await response.json();
+          // Store the article IDs of bookmarked articles
+          setBookmarkedArticles(bookmarks.map((bookmark: any) => bookmark.articleId));
+        } catch (error) {
+          console.error('Error fetching bookmarks:', error);
+        }
+      };
+      
+      fetchBookmarks();
+    }
+  }, [session]);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -331,6 +359,73 @@ export default function NewsPage() {
       });
       
     return <div className="space-y-1">{formattedContent}</div>;
+  };
+
+  // Update the toggleBookmark function to remove debug console logs
+  const toggleBookmark = async (article: NewsArticle, index: number) => {
+    if (!session?.user) {
+      toast.error('Please sign in to bookmark articles');
+      return;
+    }
+    
+    setBookmarkLoading(index);
+    
+    // Create a unique article ID
+    const articleId = Buffer.from(article.url).toString('base64');
+    
+    try {
+      // Handle different ways the ID might be stored in the session
+      const userId = session.user.id || 
+                    (session.user as any)._id || 
+                    (session.user as any).sub ||
+                    session.user.email; // Fallback to using email as ID if no ID is found
+      
+      if (!userId) {
+        throw new Error('User ID not found in session');
+      }
+      
+      if (bookmarkedArticles.includes(articleId)) {
+        // Remove bookmark
+        const response = await fetch(`/api/bookmarks?articleId=${articleId}`, {
+          method: 'DELETE',
+          headers: {
+            'X-User-ID': userId // Add user ID as a header as a backup
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to remove bookmark');
+        }
+        
+        setBookmarkedArticles(prev => prev.filter(id => id !== articleId));
+        toast.success('Article removed from bookmarks');
+      } else {
+        // Add bookmark
+        const response = await fetch('/api/bookmarks', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-User-ID': userId // Add user ID as a header as a backup
+          },
+          body: JSON.stringify({
+            article,
+            category: activeCategory,
+            userId: userId // Explicitly include userId in the request body
+          }),
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to bookmark article');
+        }
+        
+        setBookmarkedArticles(prev => [...prev, articleId]);
+        toast.success('Article bookmarked successfully');
+      }
+    } catch (error) {
+      toast.error('Failed to update bookmark: ' + (error instanceof Error ? error.message : 'Unknown error'));
+    } finally {
+      setBookmarkLoading(null);
+    }
   };
 
   return (
@@ -622,9 +717,19 @@ export default function NewsPage() {
                             <Button 
                               variant="ghost" 
                               size="sm" 
-                              className="text-muted-foreground hover:text-white hover:bg-primary transition-colors"
+                              className={`transition-colors ${
+                                bookmarkedArticles.includes(Buffer.from(article.url).toString('base64'))
+                                  ? 'text-primary bg-primary/10 hover:bg-primary hover:text-white'
+                                  : 'text-muted-foreground hover:text-white hover:bg-primary'
+                              }`}
+                              onClick={() => toggleBookmark(article, index)}
+                              disabled={bookmarkLoading === index}
                             >
-                              <BookmarkIcon className="h-4 w-4" />
+                              {bookmarkLoading === index ? (
+                                <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                              ) : (
+                                <BookmarkIcon className="h-4 w-4" />
+                              )}
                             </Button>
                           )}
                         </div>

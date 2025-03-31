@@ -12,8 +12,13 @@ import { RouteGuard } from '@/components/route-guard';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'AI NEWS HUB',
+  title: 'AI News Hub',
   description: 'AI-powered news aggregation and summarization platform',
+  icons: {
+    icon: "https://upload.wikimedia.org/wikipedia/commons/f/f8/Newspaper-154444.svg",
+    shortcut: "https://upload.wikimedia.org/wikipedia/commons/f/f8/Newspaper-154444.svg",
+    apple: "https://upload.wikimedia.org/wikipedia/commons/f/f8/Newspaper-154444.svg",
+  }
 };
 
 export default async function RootLayout({
