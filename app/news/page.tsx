@@ -1,16 +1,35 @@
 "use client";
 
 import { ProtectedComponent } from "./protected-component";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { useSession } from "next-auth/react";
-import { BookmarkIcon, ClockIcon, ChevronRightIcon, TagIcon, EyeIcon, AlertCircleIcon, SearchIcon, NewspaperIcon } from "lucide-react";
+import { 
+  BookmarkIcon, 
+  ClockIcon, 
+  ChevronRightIcon, 
+  TagIcon, 
+  EyeIcon, 
+  AlertCircleIcon, 
+  SearchIcon, 
+  NewspaperIcon, 
+  SparklesIcon, 
+  ScanSearchIcon, 
+  Sparkles, 
+  Share2Icon,
+  CopyIcon,
+  CheckIcon,
+  LinkIcon,
+  DownloadIcon
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { motion } from "framer-motion";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter, DialogTrigger, DialogClose } from "@/components/ui/dialog";
+import { toast } from "sonner";
 
 interface NewsArticle {
   title: string;
@@ -21,6 +40,14 @@ interface NewsArticle {
   source: {
     name: string;
   };
+}
+
+// New interface for summary state
+interface SummaryState {
+  articleIndex: number | null;
+  loading: boolean;
+  content: string | null;
+  error: string | null;
 }
 
 const categories = [
@@ -52,6 +79,21 @@ export default function NewsPage() {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const { data: session } = useSession();
+  
+  // Summary state
+  const [summaryState, setSummaryState] = useState<SummaryState>({
+    articleIndex: null,
+    loading: false,
+    content: null,
+    error: null
+  });
+  
+  // Dialog state
+  const [dialogOpen, setDialogOpen] = useState(false);
+
+  // New state for clipboard actions
+  const [copied, setCopied] = useState(false);
+  const summaryRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setIsLoading(true);
@@ -108,6 +150,66 @@ export default function NewsPage() {
       day: 'numeric'
     });
   };
+  
+  // Function to generate AI summary
+  const generateSummary = async (article: NewsArticle, index: number) => {
+    setSummaryState({
+      articleIndex: index,
+      loading: true,
+      content: null,
+      error: null
+    });
+    
+    setDialogOpen(true);
+    
+    try {
+      const prompt = `
+        Generate a concise and informative summary of this news article.
+        Title: ${article.title}
+        Content: ${article.description || "No description available"}
+        Source: ${article.source.name}
+        
+        Format the summary with these sections:
+        1. Key Points (3-4 bullet points)
+        2. Background Context
+        3. Why It Matters
+        
+        Keep it objective, factual, and around 250 words total.
+      `;
+      
+      const response = await fetch('/api/generate-summary', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          prompt,
+          articleIndex: index
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to generate summary');
+      }
+      
+      const data = await response.json();
+      
+      setSummaryState({
+        articleIndex: index,
+        loading: false,
+        content: data.summary,
+        error: null
+      });
+    } catch (error) {
+      console.error('Error generating summary:', error);
+      setSummaryState({
+        articleIndex: index,
+        loading: false,
+        content: null,
+        error: 'Failed to generate summary. Please try again.'
+      });
+    }
+  };
 
   // Loading skeletons for articles
   const ArticleSkeleton = () => (
@@ -132,6 +234,31 @@ export default function NewsPage() {
       </CardContent>
     </Card>
   );
+  
+  // Loading skeleton for summary
+  const SummarySkeleton = () => (
+    <div className="space-y-4 animate-pulse">
+      <div className="space-y-2">
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-4 w-5/6" />
+      </div>
+      
+      <div className="space-y-2">
+        <Skeleton className="h-4 w-1/3" />
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-4 w-3/4" />
+      </div>
+      
+      <div className="space-y-2">
+        <Skeleton className="h-4 w-1/3" />
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-4 w-5/6" />
+      </div>
+    </div>
+  );
 
   // Animation variants
   const fadeIn = {
@@ -151,6 +278,59 @@ export default function NewsPage() {
         staggerChildren: 0.1
       }
     }
+  };
+  
+  // Format the summary content with enhanced Markdown styling
+  const formatSummaryContent = (content: string) => {
+    if (!content) return null;
+    
+    // Replace Markdown headers and elements with styled components
+    const formattedContent = content
+      .split('\n')
+      .map((line, i) => {
+        // Main title
+        if (line.startsWith('# ')) {
+          return (
+            <h2 key={i} className="text-2xl font-bold mt-4 mb-4 text-primary">
+              {line.substring(2)}
+            </h2>
+          );
+        } 
+        // Section titles
+        else if (line.startsWith('## ')) {
+          return (
+            <div key={i} className="flex items-center mt-6 mb-3">
+              <div className="w-1.5 h-6 bg-primary rounded-full mr-2"></div>
+              <h3 className="text-xl font-semibold text-foreground">
+                {line.substring(3)}
+              </h3>
+            </div>
+          );
+        } 
+        // Subheadings
+        else if (line.startsWith('### ')) {
+          return (
+            <h4 key={i} className="text-lg font-medium mt-3 mb-2 text-foreground/90">
+              {line.substring(4)}
+            </h4>
+          );
+        } 
+        // Bullet points
+        else if (line.startsWith('- ')) {
+          return (
+            <div key={i} className="flex items-start my-1">
+              <div className="w-2 h-2 rounded-full bg-primary mt-1.5 mr-2 flex-shrink-0"></div>
+              <p>{line.substring(2)}</p>
+            </div>
+          );
+        } else if (line.trim() === '') {
+          return <div key={i} className="h-2"></div>;
+        } else {
+          return <p key={i} className="my-2">{line}</p>;
+        }
+      });
+      
+    return <div className="space-y-1">{formattedContent}</div>;
   };
 
   return (
@@ -263,6 +443,64 @@ export default function NewsPage() {
           </motion.div>
         )}
 
+        {/* AI Summary Dialog */}
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <DialogContent className="sm:max-w-2xl">
+            <DialogHeader>
+              <DialogTitle className="flex items-center">
+                <SparklesIcon className="h-5 w-5 text-primary mr-2" />
+                AI-Generated Summary
+              </DialogTitle>
+              <DialogDescription>
+                A concise summary of the article generated by AI.
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="py-4 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+              {summaryState.loading && <SummarySkeleton />}
+              
+              {summaryState.error && (
+                <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-md text-center">
+                  <AlertCircleIcon className="h-8 w-8 text-red-500 mx-auto mb-2" />
+                  <p className="text-red-600 dark:text-red-400">{summaryState.error}</p>
+                  <Button 
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      // Retry generating summary
+                      if (summaryState.articleIndex !== null) {
+                        generateSummary(filteredArticles[summaryState.articleIndex], summaryState.articleIndex);
+                      }
+                    }}
+                    className="mt-3"
+                  >
+                    Try Again
+                  </Button>
+                </div>
+              )}
+              
+              {summaryState.content && !summaryState.loading && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="prose dark:prose-invert max-w-none"
+                >
+                  {formatSummaryContent(summaryState.content)}
+                </motion.div>
+              )}
+            </div>
+            
+            <DialogFooter className="flex items-center justify-between">
+              <p className="text-xs text-muted-foreground italic">
+                AI summaries may not be 100% accurate. Verify information from the original source.
+              </p>
+              <DialogClose asChild>
+                <Button variant="outline">Close</Button>
+              </DialogClose>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
         {!error && (
           <motion.div 
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
@@ -348,20 +586,44 @@ export default function NewsPage() {
                     <CardContent className="pt-2">
                       <p className="text-muted-foreground mb-4 line-clamp-3">{article.description || "No description available"}</p>
                       <div className="flex justify-between items-center mt-4">
-                        <a
-                          href={article.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center text-primary font-medium hover:underline group"
-                        >
-                          Read more 
-                          <ChevronRightIcon className="ml-1 w-4 h-4 transition-transform group-hover:translate-x-1" />
-                        </a>
-                        {session && (
-                          <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-primary">
-                            <BookmarkIcon className="h-4 w-4" />
+                        <div className="flex space-x-2">
+                          <a
+                            href={article.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center text-primary font-medium hover:underline group"
+                          >
+                            Read more 
+                            <ChevronRightIcon className="ml-1 w-4 h-4 transition-transform group-hover:translate-x-1" />
+                          </a>
+                        </div>
+                        <div className="flex space-x-2">
+                          {/* AI Summary Button */}
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={() => generateSummary(article, index)}
+                            disabled={summaryState.loading && summaryState.articleIndex === index}
+                            className="text-indigo-600 hover:text-indigo-700 border-indigo-200 hover:border-indigo-300 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-300"
+                          >
+                            {summaryState.loading && summaryState.articleIndex === index ? (
+                              <>
+                                <span className="animate-pulse">Summarizing...</span>
+                              </>
+                            ) : (
+                              <>
+                                <Sparkles className="h-4 w-4 mr-1" />
+                                <span>AI Summary</span>
+                              </>
+                            )}
                           </Button>
-                        )}
+                          
+                          {session && (
+                            <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-primary">
+                              <BookmarkIcon className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
