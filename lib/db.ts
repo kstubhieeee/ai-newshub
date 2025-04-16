@@ -33,11 +33,15 @@ export async function connectToDatabase() {
 
   if (!cached.promise) {
     const opts = {
-      bufferCommands: false
+      bufferCommands: false,
+      tls: true
     };
 
     try {
-      cached.promise = mongoose.connect(process.env.MONGODB_URI!, opts);
+      cached.promise = mongoose.connect(process.env.MONGODB_URI!, opts).catch(err => {
+        console.error('Mongoose Connection Error:', err);
+        throw err;
+      });
     } catch (error) {
       console.error('MongoDB Connection Error:', error);
       throw error;

@@ -5,14 +5,23 @@ declare global {
   var _mongoClientPromise: Promise<MongoClient>;
 }
 
-const uri = process.env.MONGODB_URI!;
+if (!process.env.MONGODB_URI) {
+  throw new Error('Please add your MongoDB URI to .env.local');
+}
 
 const options = {
   serverApi: {
     version: ServerApiVersion.v1,
     strict: true,
     deprecationErrors: true,
-  }
+  },
+  tls: true,
+  tlsCAFile: undefined,
+  tlsAllowInvalidHostnames: false,
+  tlsInsecure: false,
+  minPoolSize: 1,
+  maxPoolSize: 10,
+  retryWrites: true
 };
 
 let client;
@@ -22,14 +31,20 @@ if (process.env.NODE_ENV === 'development') {
   // In development mode, use a global variable so that the value
   // is preserved across module reloads caused by HMR (Hot Module Replacement).
   if (!global._mongoClientPromise) {
-    client = new MongoClient(uri, options);
-    global._mongoClientPromise = client.connect();
+    client = new MongoClient(process.env.MONGODB_URI, options);
+    global._mongoClientPromise = client.connect().catch(err => {
+      console.error('MongoDB Connection Error:', err);
+      throw err;
+    });
   }
   clientPromise = global._mongoClientPromise;
 } else {
   // In production mode, it's best to not use a global variable.
-  client = new MongoClient(uri, options);
-  clientPromise = client.connect();
+  client = new MongoClient(process.env.MONGODB_URI, options);
+  clientPromise = client.connect().catch(err => {
+    console.error('MongoDB Connection Error:', err);
+    throw err;
+  });
 }
 
 // Export a module-scoped MongoClient promise. By doing this in a
