@@ -24,64 +24,72 @@ export const authOptions: NextAuthOptions = {
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     }),
   ],
-  adapter: MongoDBAdapter(clientPromise),
+  adapter: MongoDBAdapter(clientPromise, {
+    databaseName: 'ainewshub',
+    collections: {
+      Users: 'users',
+      Accounts: 'accounts',
+      Sessions: 'sessions',
+      VerificationTokens: 'verification_tokens',
+    }
+  }),
   pages: {
     signIn: "/auth/signin",
-    error: "/auth/error", // Custom error page
+    error: "/auth/error",
   },
   callbacks: {
     async signIn({ user, account, profile, email, credentials }) {
-      // Connect to the MongoDB database
-      await connectToDatabase();
-      
-      // Check if user exists
-      if (user?.email) {
-        // Check if a user with this email exists but with a different provider
-        const existingUser = await User.findOne({ email: user.email });
+      try {
+        await connectToDatabase();
         
-        if (existingUser) {
-          // User exists, check if they're trying to sign in with a new provider
-          const existingAccount = await UserAccount.findOne({
-            userId: existingUser._id,
-            provider: account?.provider
-          });
+        if (user?.email) {
+          const existingUser = await User.findOne({ email: user.email });
           
-          if (!existingAccount) {
-            // User exists but is using a different provider
-            // Store the error in a custom session variable
-            // This will be displayed as a toast in the UI
-            return `/auth/error?error=duplicate_email&provider=${account?.provider}`;
+          if (existingUser) {
+            const existingAccount = await UserAccount.findOne({
+              userId: existingUser._id,
+              provider: account?.provider
+            });
+            
+            if (!existingAccount) {
+              return `/auth/error?error=duplicate_email&provider=${account?.provider}`;
+            }
           }
         }
+        
+        return true;
+      } catch (error) {
+        console.error("Sign In Error:", error);
+        return false;
       }
-      
-      return true;
     },
     async session({ session, user, token }) {
-      // Add user ID to the session
-      if (session.user) {
-        // First try from JWT token if we're using the JWT strategy
-        if (token?.sub) {
-          (session.user as ExtendedUser).id = token.sub;
+      try {
+        if (session.user) {
+          if (token?.sub) {
+            (session.user as ExtendedUser).id = token.sub;
+          } else if (user?.id) {
+            (session.user as ExtendedUser).id = user.id;
+          } else if ((user as any)?._id) {
+            (session.user as ExtendedUser).id = (user as any)._id.toString();
+          }
         }
-        // Then try from the user object if we're using the database strategy
-        else if (user?.id) {
-          (session.user as ExtendedUser).id = user.id;
-        }
-        // For MongoDB adapter, get the _id directly
-        else if ((user as any)?._id) {
-          (session.user as ExtendedUser).id = (user as any)._id.toString();
-        }
+        return session;
+      } catch (error) {
+        console.error("Session Error:", error);
+        return session;
       }
-      
-      return session;
     },
     async jwt({ token, user, account }) {
-      // Add user ID to the token when first signing in
-      if (user) {
-        token.userId = user.id;
+      try {
+        if (user) {
+          token.userId = user.id;
+        }
+        return token;
+      } catch (error) {
+        console.error("JWT Error:", error);
+        return token;
       }
-      return token;
     },
   },
   session: {

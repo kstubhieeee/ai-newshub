@@ -10,8 +10,6 @@ const uri = process.env.MONGODB_URI!;
 const options = {
   ssl: true,
   tlsAllowInvalidCertificates: false,
-  tlsAllowInvalidHostnames: false,
-  tlsInsecure: false,
   serverApi: {
     version: ServerApiVersion.v1,
     strict: true,

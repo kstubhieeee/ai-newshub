@@ -34,19 +34,25 @@ export async function connectToDatabase() {
   if (!cached.promise) {
     const opts = {
       bufferCommands: false,
+      ssl: true,
+      tlsAllowInvalidCertificates: false,
     };
 
-    cached.promise = mongoose.connect(process.env.MONGODB_URI!, opts).then((mongoose) => {
-      return mongoose;
-    });
+    try {
+      cached.promise = mongoose.connect(process.env.MONGODB_URI!, opts);
+    } catch (error) {
+      console.error('MongoDB Connection Error:', error);
+      throw error;
+    }
   }
 
   try {
     cached.conn = await cached.promise;
-  } catch (e) {
+    console.log('MongoDB Connected Successfully');
+    return cached.conn;
+  } catch (error) {
     cached.promise = null;
-    throw e;
+    console.error('MongoDB Connection Error:', error);
+    throw error;
   }
-
-  return cached.conn;
 } 
