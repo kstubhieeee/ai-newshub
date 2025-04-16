@@ -492,10 +492,10 @@ export default function NewsPage() {
           <h2 className="text-lg font-medium mb-4 text-center">Browse Categories</h2>
           <div className="flex justify-center overflow-x-auto py-2 hide-scrollbar">
             <div className="flex space-x-2 pb-2">
-              {categories.map((category) => (
+          {categories.map((category) => (
                 <motion.button
-                  key={category}
-                  onClick={() => setActiveCategory(category)}
+              key={category}
+              onClick={() => setActiveCategory(category)}
                   className={`
                     px-5 py-2.5 rounded-full text-sm font-medium transition-all
                     ${activeCategory === category 
@@ -642,9 +642,9 @@ export default function NewsPage() {
                   <Card className="border border-border overflow-hidden transition-all hover:shadow-md group">
                     {article.urlToImage ? (
                       <div className="h-48 overflow-hidden relative">
-                        <img
-                          src={article.urlToImage}
-                          alt={article.title}
+                <img
+                  src={article.urlToImage}
+                  alt={article.title}
                           className="w-full h-full object-cover transition-transform group-hover:scale-105"
                           loading="lazy"
                         />
@@ -677,18 +677,18 @@ export default function NewsPage() {
                         )}
                       </div>
                       <CardTitle className="text-xl leading-tight font-semibold line-clamp-2">{article.title}</CardTitle>
-                    </CardHeader>
+            </CardHeader>
                     <CardContent className="pt-2">
                       <p className="text-muted-foreground mb-4 line-clamp-3">{article.description || "No description available"}</p>
                       <div className="flex justify-between items-center mt-4">
                         <div className="flex space-x-2">
-                          <a
-                            href={article.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
+                <a
+                  href={article.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
                             className="inline-flex items-center text-primary font-medium hover:underline group"
-                          >
-                            Read more 
+                >
+                  Read more
                             <ChevronRightIcon className="ml-1 w-4 h-4 transition-transform group-hover:translate-x-1" />
                           </a>
                         </div>
@@ -713,7 +713,7 @@ export default function NewsPage() {
                             )}
                           </Button>
                           
-                          {session && (
+                {session && (
                             <Button 
                               variant="ghost" 
                               size="sm" 
@@ -728,14 +728,14 @@ export default function NewsPage() {
                               {bookmarkLoading === index ? (
                                 <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
                               ) : (
-                                <BookmarkIcon className="h-4 w-4" />
+                    <BookmarkIcon className="h-4 w-4" />
                               )}
-                            </Button>
-                          )}
+                  </Button>
+                )}
                         </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+              </div>
+            </CardContent>
+          </Card>
                 </motion.div>
               ))
             )}
