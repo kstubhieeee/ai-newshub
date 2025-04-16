@@ -8,8 +8,6 @@ declare global {
 const uri = process.env.MONGODB_URI!;
 
 const options = {
-  ssl: true,
-  tlsAllowInvalidCertificates: false,
   serverApi: {
     version: ServerApiVersion.v1,
     strict: true,
